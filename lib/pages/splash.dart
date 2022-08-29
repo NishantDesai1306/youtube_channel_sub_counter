@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:pdp_vs_ts_v3/pages/set_channels.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:pdp_vs_ts_v3/helpers/shared_preference_helper.dart';
@@ -25,10 +26,21 @@ class SplashPageState extends State<SplashPage> {
 
   goToNextPage() async {
     SharedPreferences sp = await _prefs;
-    bool isAppExplained =
-        sp.getBool(SharedPreferenceHelper.getAppExplanationKey()) ?? false;
-    String nextPageRoute =
-        isAppExplained ? MainPage.route : AppExplanation.route;
+    bool isAppExplained = sp.getBool(SharedPreferenceHelper.getAppExplanationKey()) ?? false;
+    List<String>? channels = sp.getStringList(SharedPreferenceHelper.getSelectedChannelIdsKey());
+    String nextPageRoute = '';
+
+    if (isAppExplained) {
+      if (channels == null) {
+        nextPageRoute = SetChannels.route;
+      }
+      else {
+        nextPageRoute = MainPage.route;
+      }
+    }
+    else {
+      nextPageRoute = AppExplanation.route;
+    }
 
     Navigator.of(context).pushReplacementNamed(nextPageRoute);
   }

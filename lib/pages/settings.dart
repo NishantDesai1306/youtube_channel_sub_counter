@@ -1,10 +1,12 @@
 import 'package:dynamic_themes/dynamic_themes.dart';
+import 'package:pdp_vs_ts_v3/pages/set_channels.dart';
+import 'package:pdp_vs_ts_v3/widgets/confirm_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+
 import 'package:pdp_vs_ts_v3/constants/theme.dart';
 import 'package:pdp_vs_ts_v3/helpers/shared_preference_helper.dart';
-
-import 'about_me.dart';
+import 'package:pdp_vs_ts_v3/pages/about_me.dart';
 
 class SettingsPage extends StatefulWidget {
   static const String route = "/settings";
@@ -20,7 +22,7 @@ class SettingsPageState extends State<SettingsPage> {
   int themeId = AppThemes.light;
 
   String subscriberDifferencePreferenceKey =
-      SharedPreferenceHelper.getSubscriberDiffernceKey();
+      SharedPreferenceHelper.getSubscriberDifferenceKey();
   String themeIdKey = SharedPreferenceHelper.getThemeId();
 
   SettingsPageState() {
@@ -48,6 +50,32 @@ class SettingsPageState extends State<SettingsPage> {
     setState(() {
       themeId = newTheme;
     });
+  }
+
+  void clearChannelData () async {
+    bool? wasConfirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) =>
+            const ConfirmDialog(title: "Clear channel data", message: "Are you sure you want to clear saved channels"));
+
+    if (wasConfirmed == true) {
+      SharedPreferences sp = await SharedPreferences.getInstance();
+      List<String>? channels = sp.getStringList(SharedPreferenceHelper.getSelectedChannelIdsKey());
+
+      if (channels != null) {
+        channels.forEach((channelId) {
+          sp.remove(SharedPreferenceHelper.getNameKey(channelId));
+          sp.remove(SharedPreferenceHelper.getDescriptionKey(channelId));
+          sp.remove(SharedPreferenceHelper.getProfilePictureKey(channelId));
+          sp.remove(SharedPreferenceHelper.getSubscribersKey(channelId));
+        });
+
+        sp.remove(SharedPreferenceHelper.getSubscriberDifferenceKey());
+        sp.remove(SharedPreferenceHelper.getSelectedChannelIdsKey());
+      }
+
+      Navigator.of(context).pushReplacementNamed(SetChannels.route);
+    }
   }
 
   @override
@@ -90,10 +118,27 @@ class SettingsPageState extends State<SettingsPage> {
                         ),
                       ],
                     ),
-                    const Divider(
-                      color: Colors.white,
-                      height: 30,
+                    const Divider(color: Colors.white),
+
+                    const SizedBox(height: 10),
+
+                    Container(
+                      margin: categoryTitleBottomMargin,
+                      child: Text("Channels", style: settingCategoryTitle),
                     ),
+                    Container(
+                      margin: settingsTitleBottomMargin,
+                      child: InkWell(
+                        onTap: clearChannelData,
+                        child: const Expanded(
+                          child: Text("Clear channel data", style: settingTitle),
+                        ),
+                      ),
+                    ),
+                    const Divider(color: Colors.white),
+
+                    const SizedBox(height: 10),
+
                     Container(
                       margin: settingsTitleBottomMargin,
                       child: InkWell(
@@ -108,8 +153,7 @@ class SettingsPageState extends State<SettingsPage> {
                                 children: <Widget>[
                                   Container(
                                     margin: settingsTitleBottomMargin,
-                                    child: const Text("About Me",
-                                        style: settingTitle),
+                                    child: const Text("About Me", style: settingTitle),
                                   ),
                                 ],
                               ),

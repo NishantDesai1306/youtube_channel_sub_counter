@@ -4,7 +4,8 @@ import 'package:flare_flutter/flare_actor.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:pdp_vs_ts_v3/helpers/shared_preference_helper.dart';
-import 'package:pdp_vs_ts_v3/pages/main_page.dart';
+import 'package:pdp_vs_ts_v3/pages/set_channels.dart';
+import 'package:pdp_vs_ts_v3/widgets/responsive_container.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Duration pageChangeAnimationDuration = Duration(milliseconds: 250);
@@ -79,29 +80,31 @@ class _AppExplanationState extends State<AppExplanation> {
           padding: const EdgeInsets.all(20),
           alignment: Alignment.center,
           height: screenSize.height - bottomButtonBarHeight,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              slider,
-              Column(
-                children: <Widget>[
-                  Container(
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10)),
-                    height: 100,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    alignment: Alignment.center,
-                    child: Text(message,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: theme.primaryColor, fontSize: 20)),
-                  ),
-                  PageIndicator(carouselController: carouselController, currentPage: _currentPage)
-                ],
-              )
-            ],
+          child: ResponsiveContainer(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                slider,
+                Column(
+                  children: <Widget>[
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10)),
+                      height: 100,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      alignment: Alignment.center,
+                      child: Text(message,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: theme.primaryColor, fontSize: 20)),
+                    ),
+                    PageIndicator(carouselController: carouselController, currentPage: _currentPage)
+                  ],
+                )
+              ],
+            ),
           ),
         ),
         BottomButtonBar(
@@ -229,7 +232,7 @@ class BottomButtonBar extends StatelessWidget {
                 ),
                 onPressed: () {
                   if (isAtLastPage) {
-                    Navigator.of(context).pushReplacementNamed(MainPage.route);
+                    Navigator.of(context).pushReplacementNamed(SetChannels.route);
                   } else {
                     carouselController.nextPage(
                         duration: pageChangeAnimationDuration,

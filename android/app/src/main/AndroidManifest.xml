@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.nishantdesai.pdpvsts.pdp_vs_ts_v3">
+    package="com.nishantdesai.pdpvsts.pdp_vs_ts_v3"
+    android:requestLegacyExternalStorage="true"
+    >
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>

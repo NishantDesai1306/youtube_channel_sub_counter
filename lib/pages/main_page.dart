@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdp_vs_ts_v3/constants/strings.dart';
 import 'package:pdp_vs_ts_v3/pages/settings.dart';
 
+import '../utils/index.dart';
+import '../widgets/responsive_container.dart';
 import 'counter_page.dart';
 
 class MainPage extends StatefulWidget {
@@ -49,10 +52,14 @@ class MainPageState extends State<MainPage> {
           ],
           systemOverlayStyle: SystemUiOverlayStyle.light,
         ),
-        body: MainPagePanels(
-            panelToRender: isSettingsOpen
-                ? MainPagePanels.SETTINGS_PANEL
-                : MainPagePanels.COUNTER_PANEL));
+        body: Container(
+          alignment: Alignment.center,
+          child: MainPagePanels(
+                panelToRender: isSettingsOpen
+                    ? MainPagePanels.SETTINGS_PANEL
+                    : MainPagePanels.COUNTER_PANEL),
+          ),
+    );
   }
 }
 
@@ -114,12 +121,14 @@ class _MainPagePanels extends State<MainPagePanels>
   Widget renderPanels(BuildContext context, BoxConstraints boxConstraints) {
     return Stack(
       children: <Widget>[
-        SettingsPage(),
+        const SettingsPage(),
         PositionedTransition(
           rect: getPanelAnimation(boxConstraints),
-          child: CounterPage(
+          child: ResponsiveContainer(
+            child: CounterPage(
               isSettingsOpen:
-                  widget.panelToRender == MainPagePanels.SETTINGS_PANEL),
+                  widget.panelToRender == MainPagePanels.SETTINGS_PANEL)
+          ),
         )
       ],
     );

@@ -1,24 +1,19 @@
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:pdp_vs_ts_v3/utils/index.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:flutter_advanced_networkimage_2/transition.dart';
 import 'package:flutter_advanced_networkimage_2/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../model/youtube_channel.dart';
 
-const PEW_DIE_PIE_DECSRIPTION =
-    "Felix Arvid Ulf Kjellberg known online as PewDiePie, is a Swedish YouTuber, comedian and video game commentator, formerly best known for his Let's Play commentaries and now mostly known for his comedic formatted shows. \n\n On 15 August 2013, PewDiePie became the most-subscribed user on YouTube, being briefly surpassed in late 2013 by YouTube Spotlight. After regaining the top position on 23 December 2013 the channel has now amassed over 79 million subscribers as of December 2018. From 29 December 2014 to 14 February 2017, PewDiePie's channel held the distinction of being the most-viewed YouTube channel, and as of November 2018, the channel has received over 19 billion video views.";
-const T_SERIES_DESCRIPTION =
-    "T-Series is an Indian music record label and film production company founded by Gulshan Kumar in 1983. It is primarily known for Bollywood music soundtracks and Indi-pop music. As of 2017, T-Series is one of the largest Indian music record labels, along with Zee Music and Sony Music India.\n\nThe T-Series YouTube channel, run by a small team of 13 people, primarily shows music videos and occasionally film trailers. It is the most-viewed YouTube channel, with over 56 billion views as of 19 December 2018. With over 77 million subscribers as of 30 December 2018, it also ranks as the second most-subscribed channel behind PewDiePie. In addition, T-Series has a multi-channel network, with 29 channels that have more than 100 million YouTube subscribers as of November 2018 and 61.5 billion views as of August 2018.";
-
 class YoutubeChannelDetailsPage extends StatefulWidget {
-  final String description;
   final YoutubeChannel youtubeChannel;
 
-  const YoutubeChannelDetailsPage({Key? key, required this.youtubeChannel, required this.description}): super(key: key);
+  const YoutubeChannelDetailsPage({Key? key, required this.youtubeChannel}): super(key: key);
 
   @override
   State<StatefulWidget> createState() => _YoutubeChannelDetailsPage();
@@ -30,105 +25,150 @@ class _YoutubeChannelDetailsPage extends State<YoutubeChannelDetailsPage> {
   final TextStyle titleTextStyle = const TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
   final EdgeInsets basicSpacing = const EdgeInsets.only(top: 10, bottom: 10);
 
+  List<Widget> getSliverWidgets() {
+    YoutubeChannel youtubeChannel = widget.youtubeChannel;
+
+    String formattedSubscriberCount = nf.format(youtubeChannel.subscriberCount).substring(1);
+    ThemeData theme = Theme.of(context);
+    double width = getLayoutWidth(context);
+    double sliverExpandedHeight = width - Get.statusBarHeight;
+    double imageDimension = width * 0.4;
+
+    Widget sliverBar = SliverAppBar(
+      expandedHeight: sliverExpandedHeight,
+      floating: false,
+      pinned: true,
+      primary: true,
+      backgroundColor: theme.primaryColor,
+      iconTheme: theme.iconTheme,
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: Chip(
+          backgroundColor: theme.primaryColor,
+          label: Text(
+              youtubeChannel.channelName,
+              style: theme.appBarTheme.toolbarTextStyle
+          ),
+        ),
+        background: Hero(
+          tag: '${youtubeChannel.channelId}_picture',
+          child: TransitionToImage(
+            image: AdvancedNetworkImage(youtubeChannel.channelPicture),
+            loadingWidget: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+            ),
+            fit: BoxFit.cover,
+            width: imageDimension,
+          ),
+        ),
+      ),
+      toolbarTextStyle: theme.textTheme.bodyText2,
+      titleTextStyle: theme.textTheme.headline6,
+    );
+    Widget sliverList = SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        return Container(
+          color: theme.backgroundColor,
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            children: <Widget>[
+              kIsWeb ? Hero(
+                tag: '${youtubeChannel.channelId}_picture',
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 30),
+                  decoration: BoxDecoration(
+                      color: theme.primaryColor,
+                      borderRadius: BorderRadius.circular(
+                          imageDimension / 2)
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(imageDimension / 2),
+                    child: TransitionToImage(
+                      image: AdvancedNetworkImage(youtubeChannel.channelPicture),
+                      loadingWidget: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+                      ),
+                      fit: BoxFit.cover,
+                      width: imageDimension,
+                    ),
+                  ),
+                ),
+              ) : Container(),
+              Container(
+                margin: basicSpacing,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text('Description:', style: titleTextStyle),
+                      Text(youtubeChannel.channelDescription, style: textStyle),
+                    ]),
+              ),
+              Container(
+                alignment: Alignment.topLeft,
+                margin: basicSpacing,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text('Subscriber Count:', style: titleTextStyle),
+                      Text(formattedSubscriberCount, style: textStyle),
+                    ]),
+              ),
+              Container(
+                margin: basicSpacing,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text('Top Videos:', style: titleTextStyle),
+                      Container(
+                        margin: const EdgeInsets.only(top: 5),
+                        height: 100,
+                        child: TopVideoList(youtubeChannel: youtubeChannel),
+                      ),
+                    ]),
+              ),
+            ],
+          ),
+        );
+      }, childCount: 1),
+    );
+
+    return kIsWeb ? [sliverList] : [sliverBar, sliverList];
+  }
+
   @override
   Widget build(BuildContext context) {
-    YoutubeChannel youtubeChannel = widget.youtubeChannel;
-    String description = widget.description;
-
-    String formattedSubscriberCount =
-    nf.format(youtubeChannel.subscriberCount).substring(1);
     ThemeData theme = Theme.of(context);
-    Size screenSize = MediaQuery.of(context).size;
-    double width = screenSize.width;
-    double sliverExpandedHeight = width - Get.statusBarHeight;
+
+    YoutubeChannel youtubeChannel = widget.youtubeChannel;
+    List<Widget> sliverWidgets = getSliverWidgets();
 
     return Scaffold(
+      appBar: kIsWeb ? AppBar(
+        centerTitle: true,
+        iconTheme: theme.iconTheme,
+        title: Text(
+            youtubeChannel.channelName,
+            style: theme.appBarTheme.titleTextStyle
+        ),
+      ) : null,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Uri url = Uri(
-              scheme: 'https',
-              host: 'www.youtube.com',
-              path: 'channel/${youtubeChannel.channelId}',
-              queryParameters: {
-                'sub_confirmation': 1,
-              }
+            scheme: 'https',
+            host: 'www.youtube.com',
+            path: 'channel/${youtubeChannel.channelId}',
+            queryParameters: {
+              'sub_confirmation': '1',
+            }
           );
+
           launchUrl(url);
         },
         tooltip: "Open ${youtubeChannel.channelName} in Youtube",
         child: Image.asset('assets/images/youtube_icon.png'),
       ),
       body: CustomScrollView(
-        slivers: <Widget>[
-          SliverAppBar(
-            expandedHeight: sliverExpandedHeight,
-            floating: false,
-            pinned: true,
-            primary: true,
-            backgroundColor: theme.primaryColor,
-            iconTheme: theme.iconTheme,
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: true,
-              title: Text(
-                youtubeChannel.channelName,
-                style: theme.appBarTheme.titleTextStyle
-              ),
-              background: Hero(
-                tag: '${youtubeChannel.channelId}_picture',
-                child: Container(
-                  padding: EdgeInsets.all(width * 0.20),
-                  child: YoutubeChannel.getProfilePicture(youtubeChannel.channelId, 0),
-                ),
-              ),
-            ),
-            toolbarTextStyle: theme.textTheme.bodyText2,
-            titleTextStyle: theme.textTheme.headline6,
-          ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              return Container(
-                color: theme.backgroundColor,
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  children: <Widget>[
-                    Container(
-                      margin: basicSpacing,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text('Description:', style: titleTextStyle),
-                            Text(description, style: textStyle),
-                          ]),
-                    ),
-                    Container(
-                      alignment: Alignment.topLeft,
-                      margin: basicSpacing,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text('Subscriber Count:', style: titleTextStyle),
-                            Text(formattedSubscriberCount, style: textStyle),
-                          ]),
-                    ),
-                    Container(
-                      margin: basicSpacing,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text('Top Videos:', style: titleTextStyle),
-                            Container(
-                              margin: const EdgeInsets.only(top: 5),
-                              height: 100,
-                              child: TopVideoList(youtubeChannel: youtubeChannel),
-                            ),
-                          ]),
-                    ),
-                  ],
-                ),
-              );
-            }, childCount: 1),
-          )
-        ],
+        slivers: sliverWidgets
       ),
     );
   }

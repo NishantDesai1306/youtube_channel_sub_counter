@@ -29,6 +29,7 @@ class AboutMePageState extends State<AboutMePage> {
 
     return Scaffold(
       appBar: AppBar(
+        iconTheme: theme.iconTheme,
         title: const Text("About"),
         centerTitle: true,
         elevation: 0,

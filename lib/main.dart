@@ -1,14 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dynamic_themes/dynamic_themes.dart';
+import 'package:pdp_vs_ts_v3/pages/set_channels.dart';
+import 'package:pdp_vs_ts_v3/utils/index.dart';
 import 'package:redux/redux.dart';
 import 'package:redux_logging/redux_logging.dart';
 import 'package:redux_thunk/redux_thunk.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:pdp_vs_ts_v3/redux/actions/internet_status_actions.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:pdp_vs_ts_v3/redux/models/app_state_model.dart';
 import 'package:pdp_vs_ts_v3/redux/reducers/app_state_reducer.dart';
@@ -22,7 +26,10 @@ import 'package:pdp_vs_ts_v3/pages/splash.dart';
 final store = Store<AppState>(
   appReducer,
   initialState: const AppState(isOnline: false, channels: []),
-  middleware: [thunkMiddleware, LoggingMiddleware.printer()]
+  middleware: [
+    thunkMiddleware,
+    // LoggingMiddleware.printer(),
+  ]
 );
 
 void main() {
@@ -47,11 +54,17 @@ class MyAppState extends State<MyApp> {
     subscription = Connectivity().onConnectivityChanged.listen((ConnectivityResult result) async {
       setInternetStatus();
     });
+
+    requestInternetPermission();
+  }
+
+  requestInternetPermission() async {
+    bool hasPermission = await Permission.storage.request().isGranted;
   }
 
   setInternetStatus () async {
-    bool isOnline = await InternetConnectionChecker().hasConnection;
-    widget.store.dispatch(SetInternetStatusAction(isOnline));
+    bool isConnectedToInternet = await isOnline();
+    widget.store.dispatch(SetInternetStatusAction(isConnectedToInternet));
   }
 
   // This widget is the root of your application.
@@ -61,19 +74,21 @@ class MyAppState extends State<MyApp> {
         store: widget.store,
         child: DynamicTheme(
             themeCollection: themeCollection,
-            defaultThemeId: AppThemes.dark,
+            defaultThemeId: AppThemes.light,
             builder: (context, theme) {
-              return MaterialApp(
-                  title: APP_NAME,
-                  theme: theme,
-                  home: const SplashPage(),
-                  routes: <String, WidgetBuilder>{
-                    SplashPage.route: (BuildContext context) => const SplashPage(),
-                    MainPage.route: (BuildContext context) => const MainPage(),
-                    AboutMePage.route: (BuildContext context) => const AboutMePage(),
-                    AppExplanation.route: (BuildContext context) =>
-                    const AppExplanation(),
-                  });
+              return
+                MaterialApp(
+                    title: APP_NAME,
+                    theme: theme,
+                    home: const SplashPage(),
+                    routes: <String, WidgetBuilder>{
+                      SplashPage.route: (BuildContext context) => const SplashPage(),
+                      MainPage.route: (BuildContext context) => const MainPage(),
+                      SetChannels.route: (BuildContext context) => const SetChannels(),
+                      AboutMePage.route: (BuildContext context) => const AboutMePage(),
+                      AppExplanation.route: (BuildContext context) =>
+                      const AppExplanation(),
+                    });
             })
     );
   }

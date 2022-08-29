@@ -1,6 +1,14 @@
 class SharedPreferenceHelper {
+  static String getSelectedChannelIdsKey() {
+    return 'channelIds';
+  }
+
   static String getNameKey(channelId) {
     return '$channelId-name';
+  }
+
+  static String getDescriptionKey(channelId) {
+    return '$channelId-description';
   }
 
   static String getProfilePictureKey(channelId) {
@@ -11,7 +19,7 @@ class SharedPreferenceHelper {
     return '$channelId-subscribers';
   }
 
-  static String getSubscriberDiffernceKey() {
+  static String getSubscriberDifferenceKey() {
     return 'notify-subscriber-difference';
   }
 

@@ -2,16 +2,17 @@ import 'dart:convert';
 import 'dart:core';
 import 'package:http/http.dart' as http;
 
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:pdp_vs_ts_v3/constants/general.dart';
-
+import 'package:pdp_vs_ts_v3/mock/youtube_data.dart';
 import 'package:pdp_vs_ts_v3/model/youtube_channel.dart';
 import 'package:pdp_vs_ts_v3/model/youtube_video.dart';
 import 'package:pdp_vs_ts_v3/utils/index.dart';
 
+bool mockData = false;
+
 class YoutubeAPI {
   static Future<YoutubeChannel> getYoutubeChannel(channelId) async {
-    bool result = await InternetConnectionChecker().hasConnection;
+    bool result = await isOnline();
 
     // if internet connection is not available then load info from shared preferences
     if (result == false) {
@@ -29,17 +30,21 @@ class YoutubeAPI {
     var response;
     String responseBody = '';
 
-    try {
-      Uri uri = getYoutubeUri('channels', {
-        'id': channelId,
-        'part': requiredFields,
-        'key': YOUTUBE_API_KEY,
-      });
-      response = await http.get(uri, headers: headers);
+    Uri uri = getYoutubeUri('channels', {
+      'id': channelId,
+      'part': requiredFields,
+      'key': YOUTUBE_API_KEY,
+    });
 
-      responseBody = response.body;
-    } catch (e) {
-      print(e.toString());
+    if (mockData) {
+      response = new http.Response(YoutubeChannelDataResponse, 200);
+    }
+    else {
+      try {
+        response = await http.get(uri, headers: headers);
+      } catch (e) {
+        print(e.toString());
+      }
     }
 
     if (response != null && response.statusCode != 200) {
@@ -50,6 +55,8 @@ class YoutubeAPI {
 
       return emptyChannel;
     }
+
+    responseBody = response.body;
 
     var responseJSON = json.decode(responseBody);
     var channelDetails = responseJSON['items'][0];
@@ -67,11 +74,12 @@ class YoutubeAPI {
     var snippet = responseJSON['items'][0]['snippet'];
 
     String channelName = snippet['title'];
+    String channelDescription = snippet['description'];
     String channelPicture = snippet['thumbnails']['high']['url'];
 
     int subscriberCount = await getSubscriberCount(channelId);
     List<YoutubeVideo> videos = await getTopVideos(channelId);
-    YoutubeChannel youtubeChannel = YoutubeChannel(channelId, channelName, channelPicture, 0, []);
+    YoutubeChannel youtubeChannel = YoutubeChannel(channelId, channelName, channelDescription, channelPicture, 0, []);
 
     youtubeChannel.setSubscriberCount(subscriberCount);
     youtubeChannel.setVideos(videos);
@@ -81,7 +89,7 @@ class YoutubeAPI {
   }
 
   static Future<int> getSubscriberCount(channelId) async {
-    bool result = await InternetConnectionChecker().hasConnection;
+    bool result = await isOnline();
 
     // if internet connection is not available then load info from shared preferences
     if (result == false) {
@@ -96,16 +104,21 @@ class YoutubeAPI {
     Map<String, String> headers = {"Accept": "application/json"};
 
     var response;
+    Uri uri = getYoutubeUri('channels', {
+      'id': channelId,
+      'part': requiredFields,
+      'key': YOUTUBE_API_KEY,
+    });
 
-    try {
-      Uri uri = getYoutubeUri('channels', {
-        'id': channelId,
-        'part': requiredFields,
-        'key': YOUTUBE_API_KEY,
-      });
-      response = await http.get(uri, headers: headers);
-    } catch (e) {
-      print(e.toString());
+    if (mockData) {
+      response = new http.Response(YoutubeChannelDataResponse, 200);
+    }
+    else {
+      try {
+        response = await http.get(uri, headers: headers);
+      } catch (e) {
+        print(e.toString());
+      }
     }
 
     if (response != null && response.statusCode == 200) {
@@ -118,15 +131,13 @@ class YoutubeAPI {
 
         subscriberCount = int.parse(statistics['subscriberCount']);
       }
-
-      print("response body: $responseBody");
     }
 
     return subscriberCount;
   }
 
   static Future<List<YoutubeVideo>> getTopVideos(channelId) async {
-    bool result = await InternetConnectionChecker().hasConnection;
+    bool result = await isOnline();
 
     // if internet connection is not available then load info from shared preferences
     if (result == false) {
@@ -149,10 +160,15 @@ class YoutubeAPI {
       'type': 'video',
     });
 
-    try {
-      response = await http.get(uri, headers: headers);
-    } catch (e) {
-      print(e.toString());
+    if (mockData) {
+      response = http.Response(YoutubeChannelVideoDetails, 200);
+    }
+    else {
+      try {
+        response = await http.get(uri, headers: headers);
+      } catch (e) {
+        print(e.toString());
+      }
     }
 
     if (response != null && response.statusCode == 200) {
@@ -173,5 +189,74 @@ class YoutubeAPI {
     }
 
     return videos;
+  }
+
+  static Future<List<YoutubeChannel>> searchYoutubeChannels(query) async {
+    bool result = await isOnline();
+
+    // if internet connection is not available then load info from shared preferences
+    if (result == false) {
+      print("device is not connected to internet");
+      return [];
+    }
+
+
+    List<String> fields = [
+      'snippet',
+    ];
+    String requiredFields = fields.join("%2C");
+    Map<String, String> headers = {"Accept": "application/json"};
+
+    var response;
+    String responseBody = '';
+
+    Uri uri = getYoutubeUri("search", {
+      'part': requiredFields,
+      'q': query,
+      'type': "channel",
+      'key': YOUTUBE_API_KEY,
+      'maxResults': '50',
+    });
+
+    if (mockData) {
+      response = http.Response(YoutubeChannelSearchResponse, 200);
+    }
+    else {
+      try {
+        response = await http.get(uri, headers: headers);
+      } catch (e) {
+        print(e.toString());
+      }
+    }
+
+    if (response != null && response.statusCode != 200) {
+      String errorMessage = "got invalid response $responseBody";
+      print(errorMessage);
+      return [];
+    }
+
+    responseBody = response.body;
+
+    var responseJSON = json.decode(responseBody);
+    List items = responseJSON['items'];
+
+    if (items.isEmpty) {
+      return [];
+    }
+
+    List<YoutubeChannel> channels = [];
+
+    for (var item in items) {
+      var snippet = item['snippet'];
+      String channelTitle = snippet['title'];
+      String channelDescription = snippet['description'];
+      String channelId = snippet['channelId'];
+      String channelPicture = snippet['thumbnails']['default']['url'];
+      YoutubeChannel channel = YoutubeChannel(channelId, channelTitle, channelDescription, channelPicture, 0, []);
+
+      channels.add(channel);
+    }
+
+    return channels;
   }
 }
