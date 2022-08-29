@@ -1,16 +1,9 @@
 # pdp_vs_ts_v3
 
-A simple Flutter project which gives a quick glance at subscriber count of Youtube greatest battle between PewDiePiew and T-Series.
+A simple Flutter project which gives a quick glance at subscriber count of youtube channels
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Get your youtube api key
+2. set it under constant `YOUTUBE_API_KEY` in file `/lib/constants/general.dart`
+3. run the app
